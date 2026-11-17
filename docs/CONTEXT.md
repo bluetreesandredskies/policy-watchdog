@@ -1,0 +1,9 @@
+# Policy Watchdog: project context (read fully before answering)
+GOAL: Local Windows tool that monitors the public ToS / privacy / pricing / fee pages of services the user uses and alerts ONLY on meaningful changes, in plain language, personalised to the user's profile.
+STACK: Python 3.12, src layout (package watchdog), stdlib sqlite3, httpx, playwright (browser fallback), trafilatura, pypdf, pydantic v2, typer, rich, anthropic SDK, FastAPI + Jinja2 (dashboard, localhost only), pytest, ruff. Models come from config: analysis_model default claude-sonnet-5-5, triage_model default claude-haiku-5-5.
+PIPELINE: service -> pages (kind tos|privacy|pricing|fees|cookies|dpa|other) -> fetch (httpx, then browser, PDF aware) -> extract text (+ structured prices for pricing/fees) -> normalise -> hash -> snapshot -> changed? -> paragraph diff -> noise filter -> pending change -> confirmed on 2nd check -> LLM analysis -> verdict -> alert policy -> toast/email/push, or weekly digest.
+RULES: First fetch of a page is a silent baseline. A text drop over 60% is an extraction anomaly and is never analysed. A change must persist for 2 consecutive checks (confirm window) unless it is a price change. LLM output is JSON validated by pydantic; every evidence quote must appear in the diff or the verdict is downgraded. Send only changed sections (max_diff_chars), cache verdicts by diff hash, respect the daily LLM budget. Polite fetching: identifying User-Agent, robots.txt, 1 request per host per 5 s, daily checks, conditional GET. Blocked or login-only pages use manual capture (data/inbox). Secrets only in .env. All timestamps UTC in the DB.
+CODE STYLE: type hints, small functions, no global state, tests for every module, ruff clean, pathlib.
+CHAT WORKFLOW: files are returned as FILE: path + a 4-backtick block and unpacked by tools/unpack.py.
+STATUS: Day 0 done (folders, tools, repo).
+DECISIONS LOG: (append one line per deviation from this plan)
